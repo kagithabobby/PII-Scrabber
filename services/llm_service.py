@@ -3,7 +3,11 @@ import os
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 def call_llm(prompt):
-    print("API KEY:", OPENROUTER_API_KEY)  # DEBUG
+      
+    print("API KEY:", OPENROUTER_API_KEY)
+    print("STATUS:", response.status_code)
+    print("RESPONSE:", response.text)
+    # DEBUG
     url = "https://openrouter.ai/api/v1/chat/completions"
 
     headers = {
