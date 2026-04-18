@@ -18,7 +18,7 @@ STOPWORDS = {"The", "This", "My", "Hello", "Hi", "Say", "Please"}
 IGNORE_WORDS = {"PAN", "EMAIL", "AADHAAR"}
 
 # ------------------------
-# PRIORITY (IMPORTANT)
+# PRIORITY
 # ------------------------
 PRIORITY = {
     "EMAIL": 1,
@@ -69,9 +69,10 @@ def mask_pii_with_mapping(text: str):
     doc = nlp(text)
 
     for ent in doc.ents:
-        val = ent.text
+        val = ent.text.strip()
 
-        if val in mapping.values():
+        # 🚫 skip keywords like PAN, EMAIL
+        if val.upper() in IGNORE_WORDS:
             continue
 
         if ent.label_ == "PERSON":
@@ -84,7 +85,7 @@ def mask_pii_with_mapping(text: str):
             spans.append((ent.start_char, ent.end_char, "LOC", val))
 
     # ------------------------
-    # 3) HEURISTIC PERSON DETECTION (fallback)
+    # 3) HEURISTIC PERSON (fallback)
     # ------------------------
     words = list(re.finditer(r'\b[A-Z][a-z]+\b', text))
 
@@ -94,7 +95,7 @@ def mask_pii_with_mapping(text: str):
         if word in STOPWORDS or word.upper() in IGNORE_WORDS:
             continue
 
-        # skip if already covered
+        # skip if already covered by another span
         if any(not (w.end() <= s or w.start() >= e) for (s, e, *_ ) in spans):
             continue
 
@@ -106,10 +107,12 @@ def mask_pii_with_mapping(text: str):
     spans.sort(key=lambda x: (x[0], PRIORITY[x[2]], -(x[1] - x[0])))
 
     resolved = []
-    occupied = [False] * (len(text) + 1)
+    occupied = [False] * len(text)
+
+    seen_values = set()
 
     for s, e, label, val in spans:
-        if val in mapping.values():
+        if val in seen_values:
             continue
 
         if any(occupied[i] for i in range(s, e)):
@@ -119,9 +122,10 @@ def mask_pii_with_mapping(text: str):
             occupied[i] = True
 
         resolved.append((s, e, label, val))
+        seen_values.add(val)
 
     # ------------------------
-    # 5) REPLACE RIGHT-TO-LEFT
+    # 5) REPLACE RIGHT → LEFT
     # ------------------------
     resolved.sort(key=lambda x: x[0], reverse=True)
 
