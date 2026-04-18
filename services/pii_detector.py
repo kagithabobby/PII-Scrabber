@@ -1,38 +1,44 @@
 import re
 import spacy
 
+# Load once (important for performance)
 nlp = spacy.load("en_core_web_sm")
 
 # ------------------------
 # REGEX PATTERNS
 # ------------------------
-EMAIL_RE = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
+EMAIL_RE = re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b')
 PHONE_RE = re.compile(r'\b\d{10}\b')
 AADHAAR_RE = re.compile(r'\b\d{4}\s?\d{4}\s?\d{4}\b')
 PAN_RE = re.compile(r'\b[A-Z]{5}[0-9]{4}[A-Z]\b')
+PIN_RE = re.compile(r'\b\d{4,6}\b')  # PIN / OTP-like
 
 # ------------------------
 # IGNORE WORDS
 # ------------------------
-IGNORE_WORDS = {"PAN", "EMAIL", "AADHAAR"}
+IGNORE_WORDS = {"PAN", "EMAIL", "AADHAAR", "PIN", "OTP"}
 
 # ------------------------
-# PRIORITY
+# PRIORITY (LOW = HIGH PRIORITY)
 # ------------------------
 PRIORITY = {
     "EMAIL": 1,
     "PHONE": 1,
     "AADHAAR": 1,
     "PAN": 1,
+    "PIN": 1,
     "PERSON": 2,
-    "ORG": 2,
-    "LOC": 2
+    "ORG": 3,
+    "LOC": 3
 }
 
 # ------------------------
 # MAIN FUNCTION
 # ------------------------
 def mask_pii_with_mapping(text: str):
+    if not text or not isinstance(text, str):
+        return "", {}
+
     mapping = {}
 
     counts = {
@@ -40,6 +46,7 @@ def mask_pii_with_mapping(text: str):
         "PHONE": 1,
         "AADHAAR": 1,
         "PAN": 1,
+        "PIN": 1,
         "PERSON": 1,
         "ORG": 1,
         "LOC": 1
@@ -62,6 +69,13 @@ def mask_pii_with_mapping(text: str):
     for m in PAN_RE.finditer(text):
         spans.append((m.start(), m.end(), "PAN", m.group()))
 
+    for m in PIN_RE.finditer(text):
+        # Avoid masking already detected numbers
+        val = m.group()
+        if any(val == s[3] for s in spans):
+            continue
+        spans.append((m.start(), m.end(), "PIN", val))
+
     # ------------------------
     # 2) NER DETECTION
     # ------------------------
@@ -70,7 +84,7 @@ def mask_pii_with_mapping(text: str):
     for ent in doc.ents:
         val = ent.text.strip()
 
-        if val.upper() in IGNORE_WORDS:
+        if not val or val.upper() in IGNORE_WORDS:
             continue
 
         if ent.label_ == "PERSON":
@@ -105,7 +119,7 @@ def mask_pii_with_mapping(text: str):
         seen_values.add(val)
 
     # ------------------------
-    # 4) REPLACE (RIGHT → LEFT)
+    # 4) REPLACE RIGHT → LEFT
     # ------------------------
     resolved.sort(key=lambda x: x[0], reverse=True)
 

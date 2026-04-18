@@ -21,13 +21,15 @@ def call_llm(prompt: str):
 
     # ✅ Balanced system prompt
     system_prompt = (
-        "You are a helpful AI assistant.\n"
-        "The input may contain placeholder tokens such as [PERSON_1], [EMAIL_1], or [PHONE_1] that represent anonymized data.\n"
-        "Instructions:\n"
-        "- Ignore the placeholder format and focus on the meaning of the question.\n"
-        "- Do not explain or comment on placeholders.\n"
-        "- Do not assume extra information.\n"
-        "- Answer clearly and concisely."
+    "You are a helpful AI assistant.\n"
+    "The input may contain placeholder tokens such as [PERSON_1], [EMAIL_1], or [PHONE_1].\n"
+    "\n"
+    "Instructions:\n"
+    "- Ignore placeholder format and focus on the meaning.\n"
+    "- Do not mention or explain placeholders.\n"
+    "- Do not show reasoning, thinking, or analysis.\n"
+    "- Respond with only the final answer.\n"
+    "- Follow the user’s format exactly (e.g., if asked for 2 lines, return exactly 2 lines).\n"
     )
 
     data = {
