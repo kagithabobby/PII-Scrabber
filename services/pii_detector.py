@@ -12,9 +12,8 @@ AADHAAR_RE = re.compile(r'\b\d{4}\s?\d{4}\s?\d{4}\b')
 PAN_RE = re.compile(r'\b[A-Z]{5}[0-9]{4}[A-Z]\b')
 
 # ------------------------
-# FILTER WORDS
+# IGNORE WORDS
 # ------------------------
-STOPWORDS = {"The", "This", "My", "Hello", "Hi", "Say", "Please"}
 IGNORE_WORDS = {"PAN", "EMAIL", "AADHAAR"}
 
 # ------------------------
@@ -46,7 +45,7 @@ def mask_pii_with_mapping(text: str):
         "LOC": 1
     }
 
-    spans = []  # (start, end, label, value)
+    spans = []
 
     # ------------------------
     # 1) REGEX DETECTION
@@ -71,7 +70,6 @@ def mask_pii_with_mapping(text: str):
     for ent in doc.ents:
         val = ent.text.strip()
 
-        # 🚫 skip keywords like PAN, EMAIL
         if val.upper() in IGNORE_WORDS:
             continue
 
@@ -85,30 +83,12 @@ def mask_pii_with_mapping(text: str):
             spans.append((ent.start_char, ent.end_char, "LOC", val))
 
     # ------------------------
-    # 3) HEURISTIC PERSON (fallback)
-    # ------------------------
-    words = list(re.finditer(r'\b[A-Z][a-z]+\b', text))
-
-    for w in words:
-        word = w.group()
-
-        if word in STOPWORDS or word.upper() in IGNORE_WORDS:
-            continue
-
-        # skip if already covered by another span
-        if any(not (w.end() <= s or w.start() >= e) for (s, e, *_ ) in spans):
-            continue
-
-        spans.append((w.start(), w.end(), "PERSON", word))
-
-    # ------------------------
-    # 4) RESOLVE OVERLAPS
+    # 3) RESOLVE OVERLAPS
     # ------------------------
     spans.sort(key=lambda x: (x[0], PRIORITY[x[2]], -(x[1] - x[0])))
 
     resolved = []
     occupied = [False] * len(text)
-
     seen_values = set()
 
     for s, e, label, val in spans:
@@ -125,7 +105,7 @@ def mask_pii_with_mapping(text: str):
         seen_values.add(val)
 
     # ------------------------
-    # 5) REPLACE RIGHT → LEFT
+    # 4) REPLACE (RIGHT → LEFT)
     # ------------------------
     resolved.sort(key=lambda x: x[0], reverse=True)
 
