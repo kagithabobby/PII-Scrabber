@@ -295,7 +295,38 @@
 
 # Note: The above code is a combination of all the phases, with the real LLM call integrated. The PII detection, mapping, and rehydration functions are defined as before, but you can modularize them into separate files for better organization.
 
+# from fastapi import FastAPI
+# from services.logger import log_request
+# from services.pii_detector import mask_pii_with_mapping
+# from services.llm_service import call_llm
+# from services.rehydrator import rehydrate
+
+# app = FastAPI()
+
+# @app.get("/")
+# def home():
+#     return {"message": "PII Scrubber API Running"}
+
+# @app.post("/chat")
+# def chat(data: dict):
+#     input_text = data.get("text", "")
+
+#     masked_text, mapping = mask_pii_with_mapping(input_text)
+#     llm_response = call_llm(masked_text)
+#     final_response = rehydrate(llm_response, mapping)
+
+#     return {
+#         "original": input_text,
+#         "masked": masked_text,
+#         "llm_response": llm_response,
+#         "final_response": final_response
+#     }
+
+
+# updated main.py with modularized code and logging
+
 from fastapi import FastAPI
+from services.logger import log_request
 from services.pii_detector import mask_pii_with_mapping
 from services.llm_service import call_llm
 from services.rehydrator import rehydrate
@@ -310,8 +341,16 @@ def home():
 def chat(data: dict):
     input_text = data.get("text", "")
 
+    # Step 1: Mask PII
     masked_text, mapping = mask_pii_with_mapping(input_text)
+
+    # ✅ ADD LOGGING HERE (IMPORTANT)
+    log_request(input_text, masked_text, mapping)
+
+    # Step 2: Call LLM
     llm_response = call_llm(masked_text)
+
+    # Step 3: Rehydrate
     final_response = rehydrate(llm_response, mapping)
 
     return {
