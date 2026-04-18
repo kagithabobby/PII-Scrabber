@@ -183,17 +183,17 @@
 #phase 4
 
 
-from fastapi import FastAPI
-import re
-import requests
+# from fastapi import FastAPI
+# import re
+# import requests
 
-app = FastAPI()
+# app = FastAPI()
 
-# ------------------------
-# CONFIG
-# ------------------------
+# # ------------------------
+# # CONFIG
+# # ------------------------
 
-OPENROUTER_API_KEY = "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"
+# OPENROUTER_API_KEY = "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"
 
 # ------------------------
 # PII Detection + Mapping
