@@ -2,7 +2,10 @@
 
 #!/usr/bin/env bash
 
+#!/usr/bin/env bash
+
 pip install -r requirements.txt
-python -m spacy download en_core_web_sm
+
+python -m spacy download en_core_web_sm || true
 
 uvicorn main:app --host 0.0.0.0 --port 10000
