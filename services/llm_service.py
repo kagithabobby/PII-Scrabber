@@ -31,9 +31,20 @@
 #         return f"LLM Error: {response.text}"
 #     print("API KEY:", OPENROUTER_API_KEY)
 
+import os
+
+from flask.cli import load_dotenv
+
+
 def call_llm(prompt):
     import requests
+    # import os
+
+    # OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     import os
+    from dotenv import load_dotenv
+
+    load_dotenv()
 
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 

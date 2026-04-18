@@ -327,6 +327,7 @@
 
 from fastapi import FastAPI
 from services.logger import log_request
+from services.logger import log_request, get_logs
 from services.pii_detector import mask_pii_with_mapping
 from services.llm_service import call_llm
 from services.rehydrator import rehydrate
@@ -358,4 +359,9 @@ def chat(data: dict):
         "masked": masked_text,
         "llm_response": llm_response,
         "final_response": final_response
+    }
+@app.get("/logs")
+def fetch_logs():
+    return {
+        "logs": get_logs()
     }
