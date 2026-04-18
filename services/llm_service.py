@@ -32,24 +32,18 @@
 #     print("API KEY:", OPENROUTER_API_KEY)
 
 import os
+import requests
+from dotenv import load_dotenv
 
-from flask.cli import load_dotenv
+# Load env only once
+load_dotenv()
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 
-def call_llm(prompt):
-    import requests
-    # import os
-
-    # OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-    import os
-    from dotenv import load_dotenv
-
-    load_dotenv()
-
-    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-
+def call_llm(prompt: str):
     if not OPENROUTER_API_KEY:
-        return "ERROR: API key missing in Render environment"
+        return "ERROR: API key missing"
 
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -68,9 +62,12 @@ def call_llm(prompt):
     try:
         response = requests.post(url, headers=headers, json=data)
 
+        # Better safety check
+        if response.status_code != 200:
+            return f"LLM ERROR: {response.text}"
+
         result = response.json()
 
-        # ✅ SAFE CHECK
         if "choices" in result:
             return result["choices"][0]["message"]["content"]
         else:
