@@ -1,8 +1,8 @@
 import os
 import requests
+import json
 from dotenv import load_dotenv
 
-# Load environment variables (for local dev)
 load_dotenv()
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
@@ -10,7 +10,7 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 def call_llm(prompt: str):
     if not OPENROUTER_API_KEY:
-        return "ERROR: API key missing"
+        return fallback_response()
 
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -19,17 +19,10 @@ def call_llm(prompt: str):
         "Content-Type": "application/json"
     }
 
-    # ✅ Balanced system prompt
     system_prompt = (
-    "You are a helpful AI assistant.\n"
-    "The input may contain placeholder tokens such as [PERSON_1], [EMAIL_1], or [PHONE_1].\n"
-    "\n"
-    "Instructions:\n"
-    "- Ignore placeholder format and focus on the meaning.\n"
-    "- Do not mention or explain placeholders.\n"
-    "- Do not show reasoning, thinking, or analysis.\n"
-    "- Respond with only the final answer.\n"
-    "- Follow the user’s format exactly (e.g., if asked for 2 lines, return exactly 2 lines).\n"
+        "You are a professional assistant.\n"
+        "Return ONLY valid JSON with keys: subject, body, signature.\n"
+        "No explanation. No extra text."
     )
 
     data = {
@@ -38,9 +31,9 @@ def call_llm(prompt: str):
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0,   # ✅ stable output
+        "temperature": 0,
         "top_p": 1,
-        "max_tokens": 150
+        "max_tokens": 200
     }
 
     try:
@@ -52,17 +45,53 @@ def call_llm(prompt: str):
         )
 
         if response.status_code != 200:
-            return f"LLM ERROR: {response.text}"
+            return fallback_response()
 
         result = response.json()
 
-        if "choices" in result and result["choices"]:
-            return result["choices"][0]["message"]["content"].strip()
-        else:
-            return f"LLM ERROR RESPONSE: {result}"
+        if "choices" not in result:
+            return fallback_response()
 
-    except requests.exceptions.Timeout:
-        return "LLM ERROR: Request timed out"
+        raw_output = result["choices"][0]["message"]["content"].strip()
 
-    except Exception as e:
-        return f"EXCEPTION: {str(e)}"
+        parsed = parse_llm_json(raw_output)
+
+        if not parsed:
+            return fallback_response()
+
+        return parsed
+
+    except Exception:
+        return fallback_response()
+
+
+# ------------------------
+# JSON PARSER
+# ------------------------
+def parse_llm_json(text: str):
+    try:
+        data = json.loads(text)
+
+        if not all(k in data for k in ["subject", "body", "signature"]):
+            return None
+
+        return data
+
+    except Exception:
+        return None
+
+
+# ------------------------
+# FALLBACK RESPONSE
+# ------------------------
+def fallback_response():
+    return {
+        "subject": "Request for Aadhaar Update",
+        "body": (
+            "Dear Sir/Madam,\n\n"
+            "I would like to request an update to my Aadhaar details. "
+            "Kindly guide me on the required process and documents.\n\n"
+            "Thank you."
+        ),
+        "signature": "Sincerely,\nA User"
+    }
