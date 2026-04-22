@@ -1,5 +1,9 @@
-fastapi
-uvicorn[standard]
-requests
-spacy
-python-dotenv
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.35,<1.0
+requests>=2.32,<3.0
+spacy>=3.8,<4.0
+spacy-transformers>=1.3,<2.0
+python-dotenv>=1.1,<2.0
+pytest>=8.3,<9.0
+phonenumbers>=8.13.0
+https://github.com/explosion/spacy-models/releases/download/en_core_web_trf-3.8.0/en_core_web_trf-3.8.0-py3-none-any.whl
