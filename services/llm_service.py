@@ -30,17 +30,17 @@ def call_llm(prompt: str) -> dict[str, str]:
     }
 
     system_prompt = (
-        "You are a helpful assistant. You will receive text where sensitive information "
-        "has been replaced with placeholders like [PERSON_1] or [PHONE_1]. "
-        "You MUST maintain these placeholders in your response so the system can restore them. "
-        "Do not provide generic templates; respond directly to the user's request using the placeholders provided. "
+        "You are a helpful assistant. Your primary task is to directly answer the user's questions or fulfill their requests. "
+        "The user's text may contain placeholders like [PERSON_1] or [PHONE_1] representing sensitive data. "
+        "You MUST maintain these exact placeholders in your response when referring to those entities. "
+        "Do not just output generic templates; you must provide a full, helpful, and meaningful response to the user's actual prompt. "
         "Return ONLY valid JSON with a single string key `reply` containing your full conversational response."
     )
 
     user_content = (
-        f"Please process the following request and respond using the required JSON format. "
-        f"Remember to KEEP all placeholders exactly as they appear:\n\n"
-        f"<user_input>\n{prompt}\n</user_input>"
+        f"Please fulfill the following user request and respond using the required JSON format. "
+        f"Remember to KEEP all placeholders exactly as they appear and directly address the user's intent:\n\n"
+        f"User Request:\n{prompt}"
     )
 
     payload = {

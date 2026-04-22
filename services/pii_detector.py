@@ -117,11 +117,16 @@ def _spacy_confidence(ent: Any) -> float:
         return 0.85
 
 
+FALSE_POSITIVES = {"hod", "head of department"}
+
 def _collect_spans(text: str) -> list[Span]:
     spans = _regex_spans(text)
 
     doc = get_nlp()(text)
     for ent in doc.ents:
+        if ent.text.strip().lower() in FALSE_POSITIVES:
+            continue
+
         label = None
         if ent.label_ == "PERSON":
             label = "PERSON"
