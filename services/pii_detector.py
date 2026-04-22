@@ -39,7 +39,7 @@ class Span:
 
 @lru_cache(maxsize=1)
 def get_nlp():
-    model_name = os.getenv("SPACY_MODEL", "en_core_web_trf")
+    model_name = os.getenv("SPACY_MODEL", "en_core_web_md")
     fallback_model = os.getenv("SPACY_FALLBACK_MODEL", "en_core_web_sm")
 
     try:
